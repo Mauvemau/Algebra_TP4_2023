@@ -44,7 +44,7 @@ public class MyCamera {
         var corners = new Vector3[8];
 
         var fovRad = Mathf.Deg2Rad * fov;
-        var tanFov = Mathf.Tan(fovRad * 0.5f);
+        var tanFov = Mathf.Tan(fovRad * 0.5f); // Sacamos la tangente del fov para saber la relacion altura/distancia
 
         var nearHeight = 2f * tanFov * near;
         var nearWidth = nearHeight * aspect;
@@ -53,18 +53,18 @@ public class MyCamera {
 
         var forward = _direction.normalized;
         var right = Vector3.Cross(forward, _up).normalized;
-        var up = Vector3.Cross(right, forward).normalized;
+        var up = Vector3.Cross(right, forward).normalized; // Sacamos los tres vectores de la camara con producto cruz
 
         var nearCenter = _position + forward * near;
-        var farCenter = _position + forward * far;
+        var farCenter = _position + forward * far; // Necesitamos los centros para calcular las esquinas
 
-        // Near
+        // near
         corners[0] = nearCenter - (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom left
         corners[1] = nearCenter + (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom right
         corners[2] = nearCenter - (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top left
         corners[3] = nearCenter + (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top right
 
-        // Far
+        // far
         corners[4] = farCenter - (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom left
         corners[5] = farCenter + (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom right
         corners[6] = farCenter - (right * (farWidth * 0.5f)) + (up * (farHeight * 0.5f)); // top left
