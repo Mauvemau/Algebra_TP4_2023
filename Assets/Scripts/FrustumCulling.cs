@@ -40,8 +40,8 @@ public class MyCamera {
         return points.Any(PointInFrustum);
     }
     
-    public Vector3[] GetFrustumCornersWorld() {
-        var corners = new Vector3[8];
+    public Dictionary<string, Vector3> GetFrustumCornersWorld() {
+        Dictionary<string, Vector3> corners = new Dictionary<string, Vector3>();
 
         var fovRad = Mathf.Deg2Rad * fov;
         var tanFov = Mathf.Tan(fovRad * 0.5f); // Sacamos la tangente del fov para saber la relacion altura/distancia
@@ -59,16 +59,30 @@ public class MyCamera {
         var farCenter = _position + forward * far; // Necesitamos los centros para calcular las esquinas
 
         // near
+        /*
         corners[0] = nearCenter - (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom left
         corners[1] = nearCenter + (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom right
         corners[2] = nearCenter - (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top left
         corners[3] = nearCenter + (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top right
+        */
+
+        corners["near_bottomLeft"] = nearCenter - (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom left
+        corners["near_bottomRight"] = nearCenter + (right * (nearWidth * 0.5f)) - (up * (nearHeight * 0.5f)); // bottom right
+        corners["near_topLeft"] = nearCenter - (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top left
+        corners["near_topRight"] = nearCenter + (right * (nearWidth * 0.5f)) + (up * (nearHeight * 0.5f)); // top right
 
         // far
+        /*
         corners[4] = farCenter - (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom left
         corners[5] = farCenter + (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom right
         corners[6] = farCenter - (right * (farWidth * 0.5f)) + (up * (farHeight * 0.5f)); // top left
         corners[7] = farCenter + (right * (farWidth * 0.5f)) + (up * (farHeight * 0.5f)); // top right
+        */
+
+        corners["far_bottomLeft"] = farCenter - (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom left
+        corners["far_bottomRight"] = farCenter + (right * (farWidth * 0.5f)) - (up * (farHeight * 0.5f)); // bottom right
+        corners["far_topLeft"] = farCenter - (right * (farWidth * 0.5f)) + (up * (farHeight * 0.5f)); // top left
+        corners["far_topRight"] = farCenter + (right * (farWidth * 0.5f)) + (up * (farHeight * 0.5f)); // top right
 
         return corners;
     }
@@ -77,12 +91,12 @@ public class MyCamera {
         var corners = GetFrustumCornersWorld();
         var planes = new Plane[6];
 
-        planes[0] = new Plane(corners[0], corners[4], corners[6]); // left
-        planes[1] = new Plane(corners[5], corners[1], corners[7]); // right
-        planes[2] = new Plane(corners[0], corners[1], corners[4]); // bottom
-        planes[3] = new Plane(corners[2], corners[6], corners[3]); // top
-        planes[4] = new Plane(corners[0], corners[2], corners[1]); // near
-        planes[5] = new Plane(corners[5], corners[7], corners[4]); // far
+        planes[0] = new Plane(corners["near_bottomLeft"], corners["far_bottomLeft"], corners["far_topLeft"]); // left
+        planes[1] = new Plane(corners["far_bottomRight"], corners["near_bottomRight"], corners["far_topRight"]); // right
+        planes[2] = new Plane(corners["near_bottomLeft"], corners["near_bottomRight"], corners["far_bottomLeft"]); // bottom
+        planes[3] = new Plane(corners["near_topLeft"], corners["far_topLeft"], corners["near_topRight"]); // top
+        planes[4] = new Plane(corners["near_bottomLeft"], corners["near_topLeft"], corners["near_bottomRight"]); // near
+        planes[5] = new Plane(corners["far_bottomRight"], corners["far_topRight"], corners["far_bottomLeft"]); // far
 
         return planes;
     }
@@ -190,22 +204,22 @@ public class FrustumCulling : MonoBehaviour {
         var corners = cam.GetFrustumCornersWorld();
 
         // Near
-        Gizmos.DrawLine(corners[0], corners[1]); // bottom
-        Gizmos.DrawLine(corners[1], corners[3]); // right
-        Gizmos.DrawLine(corners[3], corners[2]); // top
-        Gizmos.DrawLine(corners[2], corners[0]); // left
+        Gizmos.DrawLine(corners["near_bottomLeft"], corners["near_bottomRight"]); // bottom
+        Gizmos.DrawLine(corners["near_bottomRight"], corners["near_topRight"]); // right
+        Gizmos.DrawLine(corners["near_topRight"], corners["near_topLeft"]); // top
+        Gizmos.DrawLine(corners["near_topLeft"], corners["near_bottomLeft"]); // left
 
         // Far
-        Gizmos.DrawLine(corners[4], corners[5]);
-        Gizmos.DrawLine(corners[5], corners[7]);
-        Gizmos.DrawLine(corners[7], corners[6]);
-        Gizmos.DrawLine(corners[6], corners[4]);
+        Gizmos.DrawLine(corners["far_bottomLeft"], corners["far_bottomRight"]);
+        Gizmos.DrawLine(corners["far_bottomRight"], corners["far_topRight"]);
+        Gizmos.DrawLine(corners["far_topRight"], corners["far_topLeft"]);
+        Gizmos.DrawLine(corners["far_topLeft"], corners["far_bottomLeft"]);
 
         // Near to far
-        Gizmos.DrawLine(corners[0], corners[4]);
-        Gizmos.DrawLine(corners[1], corners[5]);
-        Gizmos.DrawLine(corners[2], corners[6]);
-        Gizmos.DrawLine(corners[3], corners[7]);
+        Gizmos.DrawLine(corners["near_bottomLeft"], corners["far_bottomLeft"]);
+        Gizmos.DrawLine(corners["near_bottomRight"], corners["far_bottomRight"]);
+        Gizmos.DrawLine(corners["near_topLeft"], corners["far_topLeft"]);
+        Gizmos.DrawLine(corners["near_topRight"], corners["far_topRight"]);
     }
 
     private void Awake() {
